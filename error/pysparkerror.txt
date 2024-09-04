@@ -1,0 +1,152 @@
+PySparkRuntimeError                       Traceback (most recent call last)
+Cell In[8], line 1
+----> 1 spark=SparkSession.builder.appName("practise").getOrCreate()
+
+File ~/MYPROJECT/python-learning/venv/lib/python3.12/site-packages/pyspark/sql/session.py:497, in SparkSession.Builder.getOrCreate(self)
+    495     sparkConf.set(key, value)
+    496 # This SparkContext may be an existing one.
+--> 497 sc = SparkContext.getOrCreate(sparkConf)
+    498 # Do not update SparkConf for existing SparkContext, as it's shared
+    499 # by all sessions.
+    500 session = SparkSession(sc, options=self._options)
+
+File ~/MYPROJECT/python-learning/venv/lib/python3.12/site-packages/pyspark/context.py:515, in SparkContext.getOrCreate(cls, conf)
+    513 with SparkContext._lock:
+    514     if SparkContext._active_spark_context is None:
+--> 515         SparkContext(conf=conf or SparkConf())
+    516     assert SparkContext._active_spark_context is not None
+    517     return SparkContext._active_spark_context
+
+File ~/MYPROJECT/python-learning/venv/lib/python3.12/site-packages/pyspark/context.py:201, in SparkContext.__init__(self, master, appName, sparkHome, pyFiles, environment, batchSize, serializer, conf, gateway, jsc, profiler_cls, udf_profiler_cls, memory_profiler_cls)
+    195 if gateway is not None and gateway.gateway_parameters.auth_token is None:
+    196     raise ValueError(
+    197         "You are trying to pass an insecure Py4j gateway to Spark. This"
+    198         " is not allowed as it is a security risk."
+    199     )
+--> 201 SparkContext._ensure_initialized(self, gateway=gateway, conf=conf)
+    202 try:
+    203     self._do_init(
+    204         master,
+    205         appName,
+   (...)
+    215         memory_profiler_cls,
+    216     )
+
+File ~/MYPROJECT/python-learning/venv/lib/python3.12/site-packages/pyspark/context.py:436, in SparkContext._ensure_initialized(cls, instance, gateway, conf)
+    434 with SparkContext._lock:
+    435     if not SparkContext._gateway:
+--> 436         SparkContext._gateway = gateway or launch_gateway(conf)
+    437         SparkContext._jvm = SparkContext._gateway.jvm
+    439     if instance:
+
+File ~/MYPROJECT/python-learning/venv/lib/python3.12/site-packages/pyspark/java_gateway.py:107, in launch_gateway(conf, popen_kwargs)
+    104     time.sleep(0.1)
+    106 if not os.path.isfile(conn_info_file):
+--> 107     raise PySparkRuntimeError(
+    108         error_class="JAVA_GATEWAY_EXITED",
+    109         message_parameters={},
+    110     )
+    112 with open(conn_info_file, "rb") as info:
+    113     gateway_port = read_int(info)
+
+PySparkRuntimeError: [JAVA_GATEWAY_EXITED] Java gateway process exited before sending its port number.
+ChatGPT said:
+ChatGPT
+The error you're encountering, [JAVA_GATEWAY_EXITED] Java gateway process exited before sending its port number, typically happens when PySpark is unable to start the Java Virtual Machine (JVM) that it relies on.
+
+Here are a few steps to troubleshoot and resolve the issue:
+
+Check Java Installation:
+
+Ensure that Java is properly installed and accessible from your environment. PySpark requires Java 8 or higher. You can check the version by running:
+bash
+Copy code
+java -version
+If Java is not installed or if the version is outdated, you can install it by running:
+bash
+Copy code
+sudo apt-get install openjdk-11-jdk
+Set the JAVA_HOME environment variable:
+bash
+Copy code
+export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+export PATH=$JAVA_HOME/bin:$PATH
+Check Your Spark Installation:
+
+Ensure that Apache Spark is correctly installed and configured. If you're using PySpark in a virtual environment, make sure all dependencies are properly installed.
+Check the Environment Variables:
+
+Make sure the environment variables SPARK_HOME and PYSPARK_PYTHON are correctly set:
+bash
+Copy code
+export SPARK_HOME=/path/to/spark
+export PYSPARK_PYTHON=/path/to/python
+export PATH=$SPARK_HOME/bin:$PATH
+Ensure Correct Version Compatibility:
+
+Ensure that the versions of Java, Spark, and PySpark are compatible with each other. Sometimes, mismatches between these versions can cause issues.
+Reinstall PySpark:
+
+Sometimes, reinstalling PySpark can resolve issues:
+bash
+Copy code
+pip
+
+
+
+
+
+You said:
+24/09/04 13:22:07 WARN Utils: Your hostname, bharath-Lenovo-IdeaPad-S145-15IIL resolves to a loopback address: 127.0.1.1; using 192.168.31.219 instead (on interface wlp1s0)
+24/09/04 13:22:07 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+24/09/04 13:22:08 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+ChatGPT said:
+ChatGPT
+The error you're encountering, PySparkRuntimeError: [JAVA_GATEWAY_EXITED] Java gateway process exited before sending its port number, usually indicates an issue with the Java environment or the Spark setup on your machine. Below are some potential causes and solutions:
+
+1. Java Installation Issues:
+Check Java Version: Ensure that Java is installed and the version is compatible with PySpark. PySpark typically requires Java 8 or 11.
+JAVA_HOME Environment Variable: Make sure the JAVA_HOME environment variable is set correctly. You can set it in your terminal or configuration file (~/.bashrc, ~/.zshrc, etc.) like this:
+bash
+Copy code
+export JAVA_HOME=/path/to/your/java
+export PATH=$JAVA_HOME/bin:$PATH
+Replace /path/to/your/java with the actual path to your Java installation.
+2. PySpark Installation Issues:
+Reinstall PySpark: Sometimes, reinstalling PySpark can resolve issues related to corrupted installations. You can reinstall it using pip:
+bash
+Copy code
+pip uninstall pyspark
+pip install pyspark
+3. Spark Configuration Issues:
+Ensure Proper Configuration: Make sure your Spark configuration is correct. You can set SPARK_LOCAL_IP to the correct IP address (not 127.0.0.1):
+bash
+Copy code
+export SPARK_LOCAL_IP=192.168.31.219
+Check Spark Installation: Ensure that Spark is installed correctly and that the SPARK_HOME environment variable points to the correct location.
+4. Network and DNS Issues:
+Hostname Resolution: The warning about your hostname resolving to a loopback address suggests that there might be a DNS or network configuration issue. You can try adding your hostname to the /etc/hosts file with the correct IP address.
+bash
+Copy code
+sudo nano /etc/hosts
+Add a line:
+Copy code
+192.168.31.219   bharath-Lenovo-IdeaPad-S145-15IIL
+5. Permissions Issues:
+Ensure that the user running the Spark process has the necessary permissions to access the Java binaries and Spark installation directories.
+6. Native Hadoop Library Warning:
+This warning is usually harmless, but if you need native Hadoop support, you might want to ensure that the native Hadoop libraries are installed and properly configured for your platform.
+Additional Steps:
+Check Logs: Look at the full error logs and any other warnings that might provide more context.
+Test Java Installation: Run a simple Java program to ensure your Java setup is functioning correctly.
+If you make these changes and the issue persists, please let me know!
+
+
+
+
+
+
+
+
